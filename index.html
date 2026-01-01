@@ -28,8 +28,9 @@
         #puzzle-area { opacity: 0; visibility: hidden; height: 0; transition: all 1s ease; transform: scale(0.8); width: 100%; display: flex; flex-direction: column; align-items: center; }
         #puzzle-area.show { opacity: 1; visibility: visible; height: auto; transform: scale(1); margin-top: 25px; }
         
-        /* แก้ไข Puzzle ให้ภาพชัด */
         .puzzle-wrap { width: 300px; height: 300px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 12px; }
+        
+        /* แก้ไขส่วนที่ทำให้ภาพชัดแบบ HD */
         .puzzle-piece { 
             width: 100%; 
             height: 100%; 
@@ -37,7 +38,11 @@
             border-radius: 6px; 
             cursor: grab; 
             touch-action: none;
-            image-rendering: -webkit-optimize-contrast; /* เพิ่มความคมชัด */
+            /* บังคับความคมชัดสูงสุด */
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated; /* สำหรับบาง Browser */
+            -ms-interpolation-mode: nearest-neighbor;
             background-repeat: no-repeat;
         }
         .dragging { opacity: 0.5; border: 2px solid var(--primary-pink); }
@@ -45,9 +50,14 @@
         .ny-card { width: 85%; max-width: 350px; background: white; border-radius: 40px; padding: 35px 20px; color: #333; box-shadow: 0 20px 50px rgba(0,0,0,0.5); animation: slideUp 0.8s ease; }
         @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* Polaroid Photo Fix */
         .polaroid { background: white; padding: 10px 10px 30px 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin: 15px auto; width: 190px; transform: rotate(-2deg); overflow: hidden; }
-        .polaroid img { width: 100%; height: 190px; object-fit: cover; border-radius: 2px; image-rendering: auto; }
+        .polaroid img { 
+            width: 100%; 
+            height: 190px; 
+            object-fit: cover; 
+            border-radius: 2px;
+            image-rendering: -webkit-optimize-contrast;
+        }
         
         .btn-miss { background: var(--primary-pink); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; width: 100%; font-size: 1.1rem; cursor: pointer; }
 
@@ -113,8 +123,8 @@
 
     <script>
         const config = {
-            startDate: new Date("2024-08-01T00:00:00"),
-            jigsawImage: "https://i.ibb.co/BVRPdX8R/IMG-9911.jpg", // รูปจิ๊กซอว์คมชัดสูง
+            startDate: new Date("2025-08-01T00:00:00"),
+            jigsawImage: "https://i.ibb.co/BVRPdX8R/IMG-9911.jpg",
             albumPhotos: [
                 "https://i.ibb.co/d0GdTcLK/1767280931173.jpg",
                 "https://i.ibb.co/N61FBzKf/IMG-20260101-222543.jpg",
@@ -128,10 +138,7 @@
         let draggedItem = null;
 
         function startApp() {
-            const music = document.getElementById('bgMusic');
-            music.play().catch(() => {
-                console.log("ต้องการการโต้ตอบเพื่อเล่นเพลง");
-            });
+            document.getElementById('bgMusic').play();
             showPage('page2');
             startTimer();
             initCanvas();
@@ -156,7 +163,10 @@
                 const div = document.createElement('div');
                 div.className = 'puzzle-piece';
                 div.style.backgroundImage = `url(${config.jigsawImage})`;
-                div.style.backgroundPosition = `${(pos % 3) * 50}% ${Math.floor(pos / 3) * 50}%`;
+                // คำนวณตำแหน่งใหม่เพื่อความแม่นยำ
+                const x = (pos % 3) * 100;
+                const y = Math.floor(pos / 3) * 100;
+                div.style.backgroundPosition = `-${x}px -${y}px`;
                 div.dataset.index = index;
                 div.addEventListener('touchstart', handleStart, {passive: false});
                 div.addEventListener('touchmove', handleMove, {passive: false});
@@ -191,8 +201,6 @@
             document.getElementById('success-overlay').style.display = 'none';
             showPage('page4');
             document.getElementById('album-photo').src = config.albumPhotos[0];
-            
-            // พลุฉลองชุดใหญ่
             for(let i=0; i<30; i++) {
                 setTimeout(() => {
                     const rx = Math.random() * canvas.width;
@@ -205,8 +213,7 @@
 
         function changePhoto() {
             let photo = document.getElementById('album-photo');
-            let currentSrc = photo.src;
-            let idx = config.albumPhotos.indexOf(currentSrc);
+            let idx = config.albumPhotos.indexOf(photo.src);
             photo.style.opacity = '0';
             setTimeout(() => {
                 photo.src = config.albumPhotos[(idx + 1) % config.albumPhotos.length];
